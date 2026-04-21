@@ -1,0 +1,174 @@
+"""
+"Arenização dos campos úmidos das veredas no Sistema Aquífero Urucuia: 
+39% dos campos úmidos perdidos e 52 Mt C emitidos em quatro décadas"
+"""
+
+
+import pandas as pd
+import numpy as np
+
+
+# =============================================================================
+# 1. Dados da Tabela 2: Estoque de carbono em 8 pontos (campo úmido, vereda Nevada)
+# =============================================================================
+data = {
+    'Ponto': ['WG-01', 'WG-02', 'WG-03', 'WG-04', 'WG-05', 'WG-06', 'WG-07', 'WG-08'],
+    'Profundidade_turfa_m': [2.10, 1.95, 2.30, 2.05, 1.80, 2.40, 2.15, 2.25],
+    'Estoque_C_Mg_ha': [245.3, 312.8, 198.4, 287.6, 156.2, 421.5, 276.9, 239.7]
+}
+df_carbon = pd.DataFrame(data)
+
+
+media_estoque = df_carbon['Estoque_C_Mg_ha'].mean()      # 267,30 Mg/ha
+desvio_estoque = df_carbon['Estoque_C_Mg_ha'].std()      # 79,9 Mg/ha
+media_profundidade = df_carbon['Profundidade_turfa_m'].mean()  # 2,125 m
+desvio_profundidade = df_carbon['Profundidade_turfa_m'].std()  # 0,19 m
+
+
+print("=== Tabela 2 - Estoque de carbono em campos úmidos (vereda Nevada) ===")
+print(df_carbon.round(1))
+print(f"\nMédia do estoque (até 1,20 m): {media_estoque:.2f} Mg C/ha")
+print(f"Desvio padrão: {desvio_estoque:.1f} Mg C/ha")
+print(f"Profundidade média da turfa (nos 8 pontos): {media_profundidade:.2f} m")
+print(f"Desvio padrão: {desvio_profundidade:.2f} m\n")
+
+
+# =============================================================================
+# 2. Dados da Tabela 1: Áreas originais e arenizadas
+# =============================================================================
+area_original_total = 500536  # ha
+area_arenizada_total = 195191  # ha
+proporcao_arenizada = (area_arenizada_total / area_original_total) * 100
+
+
+print("=== Tabela 1 - Áreas de campos úmidos e arenização ===")
+print(f"Área original (1985-1987): {area_original_total:,.0f} ha")
+print(f"Área arenizada acumulada (1984-2024): {area_arenizada_total:,.0f} ha")
+print(f"Proporção arenizada: {proporcao_arenizada:.2f}%\n")
+
+
+# =============================================================================
+# 3. Cálculo da perda de carbono (cenário referência)
+# =============================================================================
+perda_carbono_referencia = area_arenizada_total * media_estoque  # Mg C
+perda_carbono_referencia_Mt = perda_carbono_referencia / 1e6     # Mt C
+
+
+print("=== Perda de carbono - Cenário referência (estoque medido até 1,20 m) ===")
+print(f"Perda total: {perda_carbono_referencia:,.0f} Mg C = {perda_carbono_referencia_Mt:.2f} Mt C\n")
+
+
+# =============================================================================
+# 4. Cenários de sensibilidade (Tabela 3)
+# =============================================================================
+# Densidade linear de carbono por metro (baseado no estoque até 1,20 m)
+densidade_linear = media_estoque / 1.20  # Mg C / m / ha
+
+
+# Cenário inferior: profundidade média de Beer et al. 2024 (0,94 m)
+prof_inferior = 0.94  # m
+perda_inferior_Mg = area_arenizada_total * (prof_inferior * densidade_linear)
+perda_inferior_Mt = perda_inferior_Mg / 1e6
+
+
+# Cenário superior: profundidade média dos campos úmidos da vereda Nevada (2,13 m)
+# Usamos a média exata do artigo (2,13) para reproduzir o valor 92,6 Mt C
+prof_superior_artigo = 2.13  # m (conforme artigo)
+perda_superior_Mg_artigo = area_arenizada_total * (prof_superior_artigo * densidade_linear)
+perda_superior_Mt_artigo = perda_superior_Mg_artigo / 1e6
+
+
+# Alternativamente, usando a média calculada (2,125 m)
+perda_superior_Mg_calc = area_arenizada_total * (media_profundidade * densidade_linear)
+perda_superior_Mt_calc = perda_superior_Mg_calc / 1e6
+
+
+print("=== Tabela 3 - Cenários de sensibilidade da perda de carbono ===")
+print(f"Cenário inferior (prof. {prof_inferior:.2f} m): {perda_inferior_Mt:.1f} Mt C")
+print(f"Cenário referência (estoque medido 1,20 m): {perda_carbono_referencia_Mt:.1f} Mt C")
+print(f"Cenário superior (prof. 2,13 m, conforme artigo): {perda_superior_Mt_artigo:.1f} Mt C")
+print(f"(usando a média calculada de {media_profundidade:.2f} m: {perda_superior_Mt_calc:.1f} Mt C)\n")
+
+
+# =============================================================================
+# 5. Dados da Tabela 4: Perda de carbono por unidade de conservação
+# =============================================================================
+uc_data = {
+    'UC': [
+        'EE SERRA GERAL DO TOCANTINS', 'MN CANYONS E CORREDEIRAS DO RIO SONO',
+        'PN DAS NASCENTES DO RIO PARNAIBA', 'PE SERRA DAS ARARAS', 'PE DO JALAPÃO',
+        'PE DE TERRA RONCA', 'PNM RIBEIRÃO DA PRATA', 'PNM DO PEQUI',
+        'PN GRANDE SERTÃO VEREDAS', 'PE VEREDAS DO PERUAÇU', 'RVS DAS VEREDAS DO OESTE BAIANO',
+        'RESEX DE RECANTO DAS ARARAS DE TERRA RONCA', 'RPPN RESERVA ITAGUARI',
+        'RPPN LAGOA DO FORMOSO', 'RPPN FAZENDA CALIXTO', 'RDS VEREDAS DO ACARI',
+        'APA CAVERNAS DO PERUAÇU', 'APA SERRA DA TABATINGA', 'APA JALAPÃO',
+        'APA SERRA GERAL DE GOIÁS', 'APA DAS NASCENTES DO RIO VERMELHO',
+        'APA BACIA DO RIO PANDEIROS', 'APA COCHÁ E GIBÃO', 'APA BACIA DO RIO DE JANEIRO',
+        'APA DO RIO PRETO'
+    ],
+    'Area_perdida_ha': [
+        15120.56, 58.95, 6925.47, 175.14, 5908.01, 536.60, 13.69, 11.88,
+        4474.46, 184.48, 2839.27, 156.72, 44.75, 48.25, 40.80, 3203.62,
+        1494.79, 0.00, 9131.43, 503.36, 1017.16, 7239.34, 6422.72, 851.92, 5648.42
+    ]
+}
+df_uc = pd.DataFrame(uc_data)
+
+
+def perda_uc(area_ha, estoque_Mg_ha):
+    return area_ha * estoque_Mg_ha / 1e6  # Mt C
+
+
+df_uc['Perda_inferior_Mt'] = perda_uc(df_uc['Area_perdida_ha'], prof_inferior * densidade_linear)
+df_uc['Perda_referencia_Mt'] = perda_uc(df_uc['Area_perdida_ha'], media_estoque)
+df_uc['Perda_superior_Mt'] = perda_uc(df_uc['Area_perdida_ha'], prof_superior_artigo * densidade_linear)
+
+
+print("=== Tabela 4 - Perda de carbono por unidade de conservação (Mt C) ===")
+print(df_uc[['UC', 'Perda_inferior_Mt', 'Perda_referencia_Mt', 'Perda_superior_Mt']].round(1).to_string(index=False))
+print("\n")
+
+
+# =============================================================================
+# 6. Comparações com outros contextos (Tabela 5)
+# =============================================================================
+# Dívida de carbono do solo brasileiro (0-30 cm) = 1,40 Pg C
+# 1 Pg = 1000 Mt - 1,40 Pg = 1400 Mt
+debito_carbono_brasil_Mt = 1.40 * 1000   # 1400 Mt C
+relacao_debito = (perda_carbono_referencia_Mt / debito_carbono_brasil_Mt) * 100
+
+
+# Área agrícola total do Brasil
+area_agricola_brasil_Mha = 276  # Mha
+area_sau_Mha = area_arenizada_total / 1e6  # 0,195 Mha
+proporcao_area_agricola = (area_sau_Mha / area_agricola_brasil_Mha) * 100
+
+
+# Estoque médio de vereda completa (Chapada dos Veadeiros)
+estoque_vereda_completa_Mg_ha = 1159
+relacao_estoque_vereda = (media_estoque / estoque_vereda_completa_Mg_ha) * 100
+
+
+print("=== Tabela 5 - Comparação com outros contextos ===")
+print(f"Perda no SAU (referência): {perda_carbono_referencia_Mt:.2f} Mt C")
+print(f"Dívida de carbono do solo brasileiro: {debito_carbono_brasil_Mt:,.0f} Mt C")
+print(f"Relação (perda / dívida nacional): {relacao_debito:.2f}%  (artigo: 3,7%)")
+print(f"Área arenizada no SAU: {area_sau_Mha:.3f} Mha")
+print(f"Área agrícola total do Brasil: {area_agricola_brasil_Mha} Mha")
+print(f"Proporção da área agrícola: {proporcao_area_agricola:.4f}%  (artigo: 0,07%)")
+print(f"Estoque médio (campos úmidos SAU): {media_estoque:.1f} Mg C/ha")
+print(f"Estoque médio (vereda completa - Chapada dos Veadeiros): {estoque_vereda_completa_Mg_ha} Mg C/ha")
+print(f"Relação: {relacao_estoque_vereda:.1f}% do estoque da vereda completa (artigo: 23%)\n")
+
+
+# =============================================================================
+# 7. Verificação adicional: perda em vereda drenada (Horak-Terra 2022b)
+# =============================================================================
+perda_vereda_drenada_Mg_ha = 140  # Mg C/ha
+perda_equivalente_Mt = area_arenizada_total * perda_vereda_drenada_Mg_ha / 1e6
+print("=== Comparação com perda documentada em vereda drenada ===")
+print(f"Perda de 140 Mg C/ha (Horak-Terra et al. 2022b) aplicada à área arenizada: {perda_equivalente_Mt:.1f} Mt C")
+print(f"Valor obtido no artigo: 27,3 Mt C - consistente\n")
+
+
+print("=== Fim dos resultados numéricos ===")
